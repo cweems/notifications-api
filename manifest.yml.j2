@@ -1,10 +1,10 @@
 {%- set app_vars = {
-  'notify-api': {'NOTIFY_APP_NAME': 'api', 'disk_quota': '2G', 'sqlalchemy_pool_size': 20, 'routes': {
+  'notify-api': {'NOTIFY_APP_NAME': 'api', 'disk_quota': '2G', 'sqlalchemy_pool_size': 48, 'routes': {
       'preview': ['api.notify.works'],
       'staging': ['api.staging-notify.works'],
       'production': ['api.notifications.service.gov.uk'],
     },
-    'health-check-type': 'port',
+    'health-check-type': 'process',
   },
   'notify-api-db-migration': {'NOTIFY_APP_NAME': 'api', 'instances': 0},
 
