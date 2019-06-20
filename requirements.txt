@@ -14,6 +14,7 @@ Flask==1.0.2
 click-datetime==0.2
 eventlet==0.24.1
 gunicorn==19.7.1  # pyup: ignore, >19.8 breaks eventlet patching
+meinheld==1.0.1
 iso8601==0.1.12
 jsonschema==3.0.1
 marshmallow-sqlalchemy==0.16.3
@@ -40,13 +41,13 @@ alembic==1.0.10
 amqp==1.4.9
 anyjson==0.3.3
 attrs==19.1.0
-awscli==1.16.169
-bcrypt==3.1.6
+awscli==1.16.182
+bcrypt==3.1.7
 billiard==3.3.0.23
 bleach==3.1.0
 boto3==1.6.16
-botocore==1.12.159
-certifi==2019.3.9
+botocore==1.12.172
+certifi==2019.6.16
 chardet==3.0.4
 Click==7.0
 colorama==0.3.9
@@ -59,7 +60,7 @@ idna==2.8
 Jinja2==2.10.1
 jmespath==0.9.4
 kombu==3.0.37
-Mako==1.0.11
+Mako==1.0.12
 MarkupSafe==1.1.1
 mistune==0.8.4
 monotonic==1.5
@@ -77,7 +78,7 @@ PyYAML==3.13
 redis==3.2.1
 requests==2.22.0
 rsa==3.4.2
-s3transfer==0.2.0
+s3transfer==0.2.1
 six==1.12.0
 smartypants==2.0.1
 statsd==3.3.0

@@ -12,6 +12,7 @@ Flask==1.0.2
 click-datetime==0.2
 eventlet==0.24.1
 gunicorn==19.7.1  # pyup: ignore, >19.8 breaks eventlet patching
+meinheld==1.0.1
 iso8601==0.1.12
 jsonschema==3.0.1
 marshmallow-sqlalchemy==0.16.3
