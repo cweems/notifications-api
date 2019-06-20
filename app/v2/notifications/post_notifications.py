@@ -4,6 +4,7 @@ import functools
 import werkzeug
 from flask import request, jsonify, current_app, abort
 from notifications_utils.recipients import try_validate_and_format_phone_number
+from notifications_utils.statsd_decorators import statsd
 
 from app import api_user, authenticated_service, notify_celery, document_download_client
 from app.celery.letters_pdf_tasks import create_letters_pdf, process_virus_scan_passed
@@ -101,6 +102,7 @@ def post_precompiled_letter_notification():
 
 
 @v2_notification_blueprint.route('/<notification_type>', methods=['POST'])
+@statsd(namespace="loadtesting")
 def post_notification(notification_type):
     try:
         request_json = request.get_json()
@@ -179,6 +181,7 @@ def post_notification(notification_type):
     return jsonify(resp), 201
 
 
+@statsd(namespace="loadtesting")
 def process_sms_or_email_notification(*, form, notification_type, api_key, template, service, reply_to_text=None):
     form_send_to = form['email_address'] if notification_type == EMAIL_TYPE else form['phone_number']
 

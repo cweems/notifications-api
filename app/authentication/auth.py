@@ -2,6 +2,7 @@ from flask import request, _request_ctx_stack, current_app, g
 from notifications_python_client.authentication import decode_jwt_token, get_token_issuer
 from notifications_python_client.errors import TokenDecodeError, TokenExpiredError, TokenIssuerError
 from notifications_utils import request_helper
+from notifications_utils.statsd_decorators import statsd
 from sqlalchemy.exc import DataError
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -61,6 +62,7 @@ def requires_admin_auth():
         raise AuthError('Unauthorized, admin authentication token required', 401)
 
 
+@statsd(namespace="loadtesting")
 def requires_auth():
     request_helper.check_proxy_header_before_request()
 

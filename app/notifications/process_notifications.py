@@ -10,6 +10,7 @@ from notifications_utils.recipients import (
     format_email_address
 )
 from notifications_utils.timezones import convert_bst_to_utc
+from notifications_utils.statsd_decorators import statsd
 
 from app import redis_store
 from app.celery import provider_tasks
@@ -48,6 +49,7 @@ def check_placeholders(template_object):
         raise BadRequestError(fields=[{'template': message}], message=message)
 
 
+@statsd(namespace="loadtesting")
 def persist_notification(
     *,
     template_id,
@@ -122,6 +124,7 @@ def persist_notification(
     return notification
 
 
+@statsd(namespace="loadtesting")
 def send_notification_to_queue(notification, research_mode, queue=None):
     if research_mode or notification.key_type == KEY_TYPE_TEST:
         queue = QueueNames.RESEARCH_MODE
