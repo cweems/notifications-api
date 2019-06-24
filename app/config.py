@@ -429,7 +429,7 @@ class Staging(Config):
     INVALID_PDF_BUCKET_NAME = 'staging-letters-invalid-pdf'
     FROM_NUMBER = 'stage'
     API_RATE_LIMIT_ENABLED = True
-    CHECK_PROXY_HEADER = True
+    CHECK_PROXY_HEADER = False
     REDIS_ENABLED = True
 
 
