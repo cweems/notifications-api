@@ -2,7 +2,7 @@ import os
 import sys
 import traceback
 
-workers = 1
+workers = 4
 worker_class = "egg:meinheld#gunicorn_worker"
 worker_connections = int(os.getenv("SQLALCHEMY_POOL_SIZE", "32"))
 keepalive = 30
