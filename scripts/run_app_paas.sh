@@ -71,7 +71,7 @@ function start_aws_logs_agent {
 
 function run {
   while true; do
-    kill -0 ${APP_PID} 2&>/dev/null || break
+    # kill -0 ${APP_PID} 2&>/dev/null || break
     kill -0 ${AWSLOGS_AGENT_PID} 2&>/dev/null || start_aws_logs_agent
     sleep 1
   done
