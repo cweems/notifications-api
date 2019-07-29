@@ -57,6 +57,12 @@ function on_exit {
   kill 0
 }
 
+function start_haproxy {
+  exec ./haproxy -f haproxy.cfg &
+  HAPROXY_PID=`jobs -p`
+  echo "haproxy process pid: ${HAPROXY_PID}"
+}
+
 function start_application {
   exec "$@" &
   APP_PID=`jobs -p`
@@ -71,7 +77,8 @@ function start_aws_logs_agent {
 
 function run {
   while true; do
-    kill -0 ${APP_PID} 2&>/dev/null || break
+    kill -0 ${HAPROXY_PID} 2&>/dev/null || break
+    kill -0 ${APP_PID} 2&>/dev/null || start_application "$@"
     kill -0 ${AWSLOGS_AGENT_PID} 2&>/dev/null || start_aws_logs_agent
     sleep 1
   done
@@ -87,6 +94,8 @@ configure_aws_logs
 
 # The application has to start first!
 start_application "$@"
+sleep 5
+start_haproxy
 
 start_aws_logs_agent
 

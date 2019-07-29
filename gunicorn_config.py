@@ -2,11 +2,10 @@ import os
 import sys
 import traceback
 
-workers = 4
+workers = 1
 worker_class = "eventlet"
-worker_connections = 256
-errorlog = "/home/vcap/logs/gunicorn_error.log"
-bind = "0.0.0.0:{}".format(os.getenv("PORT"))
+worker_connections = 2 * int(os.getenv("SQLALCHEMY_POOL_SIZE"))
+bind = "unix:/tmp/gunicorn.sock"
 statsd_host = "{}:8125".format(os.getenv("STATSD_HOST"))
 statsd_prefix = os.getenv("STATSD_PREFIX")
 

@@ -2,7 +2,7 @@
 case $NOTIFY_APP_NAME in
   api)
     unset GUNICORN_CMD_ARGS
-    scripts/run_app_paas.sh gunicorn -c /home/vcap/app/gunicorn_config.py application
+    scripts/run_app_paas.sh python application.py
     ;;
   delivery-worker-retry-tasks)
     scripts/run_app_paas.sh celery -A run_celery.notify_celery worker --loglevel=INFO --concurrency=11 \
