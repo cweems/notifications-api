@@ -62,6 +62,7 @@ from app.v2.notifications.notification_schemas import (
     post_precompiled_letter_request
 )
 
+NAMESPACE = 'v2_post_notifications'
 
 @v2_notification_blueprint.route('/{}'.format(LETTER_TYPE), methods=['POST'])
 def post_precompiled_letter_notification():
@@ -179,6 +180,7 @@ def post_notification(notification_type):
     return jsonify(resp), 201
 
 
+@statsd(namespace=NAMESPACE)
 def process_sms_or_email_notification(*, form, notification_type, api_key, template, service, reply_to_text=None):
     form_send_to = form['email_address'] if notification_type == EMAIL_TYPE else form['phone_number']
 
@@ -223,6 +225,7 @@ def process_sms_or_email_notification(*, form, notification_type, api_key, templ
     return notification
 
 
+@statsd(namespace=NAMESPACE)
 def process_document_uploads(personalisation_data, service, simulated=False):
     file_keys = [k for k, v in (personalisation_data or {}).items() if isinstance(v, dict) and 'file' in v]
     if not file_keys:
@@ -246,6 +249,7 @@ def process_document_uploads(personalisation_data, service, simulated=False):
     return personalisation_data
 
 
+@statsd(namespace=NAMESPACE)
 def process_letter_notification(*, letter_data, api_key, template, reply_to_text, precompiled=False):
     if api_key.key_type == KEY_TYPE_TEAM:
         raise BadRequestError(message='Cannot send letters with a team api key', status_code=403)
@@ -286,6 +290,7 @@ def process_letter_notification(*, letter_data, api_key, template, reply_to_text
     return notification
 
 
+@statsd(namespace=NAMESPACE)
 def process_precompiled_letter_notifications(*, letter_data, api_key, template, reply_to_text):
     try:
         status = NOTIFICATION_PENDING_VIRUS_CHECK
@@ -320,6 +325,7 @@ def process_precompiled_letter_notifications(*, letter_data, api_key, template, 
     return notification
 
 
+@statsd(namespace=NAMESPACE)
 def get_reply_to_text(notification_type, form, template):
     reply_to = None
     if notification_type == EMAIL_TYPE:
@@ -344,6 +350,7 @@ def get_reply_to_text(notification_type, form, template):
     return reply_to
 
 
+@statsd(namespace=NAMESPACE)
 def get_precompiled_letter_template(service_id):
     template = Template.query.filter_by(
         service_id=service_id,

@@ -2,9 +2,9 @@ import os
 import sys
 import traceback
 
-workers = 4
+workers = 1
 worker_class = "eventlet"
-worker_connections = 256
+worker_connections = 2 * int(os.getenv("SQLALCHEMY_POOL_SIZE"))
 errorlog = "/home/vcap/logs/gunicorn_error.log"
 bind = "0.0.0.0:{}".format(os.getenv("PORT"))
 statsd_host = "{}:8125".format(os.getenv("STATSD_HOST"))

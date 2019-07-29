@@ -1,0 +1,70 @@
+---
+applications:
+  - name: notify-api
+    buildpacks:
+      - python_buildpack
+
+    routes:
+      {% if environment == 'staging' -%}
+      - route: api.staging-notify.works
+      {% elif environment == 'preview' -%}
+      - route: api.notify.works
+      {% endif -%}
+      - route: notify-api-{{ environment }}.cloudapps.digital
+
+    health-check-type: process
+
+    services:
+      - notify-prometheus
+      - notify-db
+      - logit-ssl-syslog-drain
+
+    env:
+      NOTIFY_APP_NAME: api
+      SQLALCHEMY_POOL_SIZE: 24
+      FLASK_APP: application.py
+
+      # Credentials variables
+      ADMIN_BASE_URL: '{{ ADMIN_BASE_URL }}'
+      ADMIN_CLIENT_SECRET: '{{ ADMIN_CLIENT_SECRET }}'
+      API_HOST_NAME: '{{ API_HOST_NAME }}'
+      DANGEROUS_SALT: '{{ DANGEROUS_SALT }}'
+      SECRET_KEY: '{{ SECRET_KEY }}'
+      ROUTE_SECRET_KEY_1: '{{ ROUTE_SECRET_KEY_1 }}'
+      ROUTE_SECRET_KEY_2: '{{ ROUTE_SECRET_KEY_2 }}'
+      CRONITOR_KEYS: '{{ CRONITOR_KEYS | tojson }}'
+
+      PERFORMANCE_PLATFORM_ENDPOINTS: '{{ PERFORMANCE_PLATFORM_ENDPOINTS | tojson }}'
+
+      DOCUMENT_DOWNLOAD_API_HOST: '{{ DOCUMENT_DOWNLOAD_API_HOST }}'
+      DOCUMENT_DOWNLOAD_API_KEY: '{{ DOCUMENT_DOWNLOAD_API_KEY }}'
+
+      NOTIFICATION_QUEUE_PREFIX: '{{ NOTIFICATION_QUEUE_PREFIX }}'
+      AWS_ACCESS_KEY_ID: '{{ AWS_ACCESS_KEY_ID }}'
+      AWS_SECRET_ACCESS_KEY: '{{ AWS_SECRET_ACCESS_KEY }}'
+
+      {% if environment in ['preview', 'staging'] %}
+      STATSD_HOST: "statsd.notify.tools"
+      STATSD_PREFIX: ""
+      {% else %}
+      STATSD_HOST: "statsd.hostedgraphite.com"
+      STATSD_PREFIX: '{{ STATSD_PREFIX }}'
+      {% endif %}
+
+      ZENDESK_API_KEY: '{{ ZENDESK_API_KEY }}'
+
+      MMG_URL: '{{ MMG_URL }}'
+      MMG_API_KEY: '{{ MMG_API_KEY }}'
+      MMG_INBOUND_SMS_AUTH: '{{ MMG_INBOUND_SMS_AUTH | tojson }}'
+      MMG_INBOUND_SMS_USERNAME: '{{ MMG_INBOUND_SMS_USERNAME | tojson }}'
+
+      FIRETEXT_URL: '{{ FIRETEXT_URL }}'
+      FIRETEXT_API_KEY: '{{ FIRETEXT_API_KEY }}'
+      LOADTESTING_API_KEY: '{{ LOADTESTING_API_KEY }}'
+      FIRETEXT_INBOUND_SMS_AUTH: '{{ FIRETEXT_INBOUND_SMS_AUTH | tojson }}'
+
+      REDIS_ENABLED: '{{ REDIS_ENABLED }}'
+      REDIS_URL: '{{ REDIS_URL }}'
+
+      TEMPLATE_PREVIEW_API_HOST: '{{ TEMPLATE_PREVIEW_API_HOST }}'
+      TEMPLATE_PREVIEW_API_KEY: '{{ TEMPLATE_PREVIEW_API_KEY }}'
