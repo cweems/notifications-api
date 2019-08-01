@@ -54,7 +54,7 @@ def fetch_sms_free_allowance_remainder(start_date):
     return query
 
 
-def fetch_billing_for_all_services(start_date, end_date):
+def fetch_sms_billing_for_all_services(start_date, end_date):
     """
     select
           ft_billing.service_id,
@@ -86,7 +86,6 @@ def fetch_billing_for_all_services(start_date, end_date):
     group by ft_billing.service_id
     order by 1;
     """
-    clauses = letter_billing_clauses()
     # ASSUMPTION: AnnualBilling has been populated for year.
     billing_year = which_financial_year(start_date)
     free_allowance_remainder = fetch_sms_free_allowance_remainder(start_date).subquery()
@@ -98,12 +97,8 @@ def fetch_billing_for_all_services(start_date, end_date):
         Service.name.label("service_name"),
         AnnualBilling.free_sms_fragment_limit,
         func.coalesce(free_allowance_remainder.c.sms_remainder, 0).label("sms_remainder"),
-        func.sum(
-            case(
-                [(FactBilling.notification_type == SMS_TYPE, FactBilling.billable_units * FactBilling.rate_multiplier)],
-                else_=0)).label('sms_billable_units'),
+        func.sum(FactBilling.billable_units * FactBilling.rate_multiplier).label('sms_billable_units'),
         FactBilling.rate.label('sms_rate'),
-        *clauses
     ).join(
         Service.organisation,
         Service.annual_billing,
@@ -113,7 +108,7 @@ def fetch_billing_for_all_services(start_date, end_date):
         FactBilling.service_id == Service.id,
         FactBilling.bst_date >= start_date,
         FactBilling.bst_date <= end_date,
-        FactBilling.notification_type.in_([SMS_TYPE, LETTER_TYPE]),
+        FactBilling.notification_type == SMS_TYPE,
         AnnualBilling.financial_year_start == billing_year,
     ).group_by(
         Organisation.name,
@@ -126,6 +121,35 @@ def fetch_billing_for_all_services(start_date, end_date):
     ).order_by(
         Organisation.name,
         Service.name,
+    )
+
+    return query.all()
+
+
+def fetch_letter_billing_for_all_services(start_date, end_date):
+    clauses = letter_billing_clauses()
+
+    query = db.session.query(
+        Organisation.name.label("organisation_name"),
+        Organisation.id.label("organisation_id"),
+        FactBilling.service_id.label("service_id"),
+        Service.name.label("service_name"),
+        *clauses
+    ).join(
+        Service.organisation
+    ).filter(
+        FactBilling.service_id == Service.id,
+        FactBilling.bst_date >= start_date,
+        FactBilling.bst_date <= end_date,
+        FactBilling.notification_type == LETTER_TYPE
+    ).group_by(
+        Organisation.name,
+        Organisation.id,
+        FactBilling.service_id,
+        Service.name,
+    ).order_by(
+        Organisation.name,
+        Service.name
     )
     return query.all()
 

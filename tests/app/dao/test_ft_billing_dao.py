@@ -16,7 +16,9 @@ from app.dao.fact_billing_dao import (
     fetch_monthly_billing_for_year,
     get_rate,
     get_rates_for_billing,
-    fetch_billing_for_all_services, fetch_sms_free_allowance_remainder
+    fetch_sms_billing_for_all_services,
+    fetch_sms_free_allowance_remainder,
+    fetch_letter_billing_for_all_services
 )
 from app.dao.organisation_dao import dao_add_service_to_organisation
 from app.models import (
@@ -558,3 +560,124 @@ def test_fetch_billing_for_all_services_with_remainder(notify_db_session):
     assert results[1].sms_billable_units == 3
     assert results[1].sms_remainder == 0
     assert results[1].sms_rate == Decimal('0.11')
+
+
+def test_fetch_sms_billing_for_all_services_with_multiple_services(notify_db_session):
+    service = create_service(service_name='has free allowance')
+    template = create_template(service=service)
+    org = create_organisation(name="Org for {}".format(service.name))
+    dao_add_service_to_organisation(service=service, organisation_id=org.id)
+    create_annual_billing(service_id=service.id, free_sms_fragment_limit=10, financial_year_start=2016)
+    create_ft_billing(service=service, template=template,
+                      bst_date=datetime(2016, 4, 20), notification_type='sms', billable_unit=2, rate=0.11)
+    create_ft_billing(service=service, template=template, bst_date=datetime(2016, 5, 20), notification_type='sms',
+                      billable_unit=2, rate=0.11)
+
+    service_2 = create_service(service_name='used free allowance')
+    template_2 = create_template(service=service_2)
+    org_2 = create_organisation(name="Org for {}".format(service_2.name))
+    dao_add_service_to_organisation(service=service_2, organisation_id=org_2.id)
+    create_annual_billing(service_id=service_2.id, free_sms_fragment_limit=10, financial_year_start=2016)
+    create_ft_billing(service=service_2, template=template_2, bst_date=datetime(2016, 4, 20), notification_type='sms',
+                      billable_unit=12, rate=0.11)
+    create_ft_billing(service=service_2, template=template_2, bst_date=datetime(2016, 5, 20), notification_type='sms',
+                      billable_unit=3, rate=0.11)
+    results = fetch_sms_billing_for_all_services(datetime(2016, 5, 1), datetime(2016, 5, 31))
+    assert len(results) == 2
+
+    assert results[0].organisation_id == org.id
+    assert results[0].service_id == service.id
+    assert results[0].sms_billable_units == 2
+    assert results[0].sms_remainder == 8
+    assert results[0].sms_rate == Decimal('0.11')
+
+    assert results[1].organisation_id == org_2.id
+    assert results[1].service_id == service_2.id
+    assert results[1].sms_billable_units == 3
+    assert results[1].sms_remainder == 0
+    assert results[1].sms_rate == Decimal('0.11')
+
+
+def test_fetch_letter_billing_for_all_services(notify_db_session):
+    service = create_service()
+    letter_template = create_template(service=service, template_type='letter')
+    org = create_organisation(name="Org for {}".format(service.name))
+    dao_add_service_to_organisation(service=service, organisation_id=org.id)
+    create_annual_billing(service_id=service.id, free_sms_fragment_limit=10, financial_year_start=2016)
+
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=1, postage='first', rate=0.56)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 24),
+                      notification_type='letter', notifications_sent=3, billable_unit=1, postage='first', rate=0.56)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=2, postage='first', rate=0.61)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=3, postage='first', rate=0.66)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=4, postage='first', rate=0.71)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=5, postage='first', rate=0.76)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+
+                      notification_type='letter', notifications_sent=1, billable_unit=1, postage='second', rate=0.30)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=2, postage='second', rate=0.35)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=3, postage='second', rate=0.40)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=4, postage='second', rate=0.45)
+    create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                      notification_type='letter', notifications_sent=1, billable_unit=5, postage='second', rate=0.50)
+
+    results = fetch_letter_billing_for_all_services(datetime(2016, 5, 1), datetime(2016, 5, 31))
+
+    assert len(results) == 4
+    print(results)
+    assert results[0].organisation_id == org.id
+    assert results[0].organisation_name == org.name
+    assert results[0].service_id == service.id
+    assert results[0].service_name == service.name
+    assert results[0].letter_rate_1_page_first_class == Decimal('0.56')
+    assert results[0].letter_count_1_page_first_class == 4
+
+    assert results[0].letter_rate_2_page_first_class == Decimal('0.61')
+    assert results[0].letter_rate_3_page_first_class == Decimal('0.66')
+    assert results[0].letter_rate_4_page_first_class == Decimal('0.71')
+    assert results[0].letter_rate_5_page_first_class == Decimal('0.76')
+
+    assert results[0].letter_rate_1_page_second_class == Decimal('0.30')
+    assert results[0].letter_rate_2_page_second_class == Decimal('0.35')
+    assert results[0].letter_rate_3_page_second_class == Decimal('0.40')
+    assert results[0].letter_rate_4_page_second_class == Decimal('0.45')
+    assert results[0].letter_rate_5_page_second_class == Decimal('0.50')
+
+
+def test_fetch_letter_billing_for_all_services_with_multiple_rates_per_date_range(notify_db_session):
+        service = create_service()
+        letter_template = create_template(service=service, template_type='letter')
+        org = create_organisation(name="Org for {}".format(service.name))
+        dao_add_service_to_organisation(service=service, organisation_id=org.id)
+        create_annual_billing(service_id=service.id, free_sms_fragment_limit=10, financial_year_start=2016)
+
+        create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 12),
+                          notification_type='letter', notifications_sent=1, billable_unit=1, postage='first', rate=0.56)
+        create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                          notification_type='letter', notifications_sent=2, billable_unit=1, postage='first', rate=0.60)
+
+        create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 12),
+                          notification_type='letter', notifications_sent=3, billable_unit=2, postage='second', rate=0.61)
+
+        create_ft_billing(service=service, template=letter_template, bst_date=datetime(2016, 5, 22),
+                          notification_type='letter', notifications_sent=4, billable_unit=2, postage='second', rate=0.65)
+
+        results = fetch_letter_billing_for_all_services(datetime(2016, 5, 1), datetime(2016, 5, 31))
+        print(results)
+        assert len(results) == 1
+        assert results[0].organisation_id == org.id
+        assert results[0].organisation_name == org.name
+        assert results[0].service_id == service.id
+        assert results[0].service_name == service.name
+        assert results[0].letter_rate_1_page_first_class == Decimal('0.56')
+        assert results[0].letter_count_1_page_first_class == 1
+
+        assert results[0].letter_rate_2_page_first_class == Decimal('0.61')
