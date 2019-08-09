@@ -5,6 +5,7 @@ from notifications_utils.statsd_decorators import statsd
 from notifications_utils.timezones import convert_utc_to_bst
 
 from app import notify_celery
+from app.config import QueueNames
 from app.cronitor import cronitor
 from app.dao.fact_billing_dao import (
     fetch_billing_data_for_day,
@@ -26,7 +27,12 @@ def create_nightly_billing(day_start=None):
         day_start = datetime.strptime(day_start, "%Y-%m-%d").date()
     for i in range(0, 10):
         process_day = day_start - timedelta(days=i)
+        populate_billing_for_day.apply_async([process_day], queue=QueueNames.STATISTICS)
 
+
+@notify_celery.task(name="populate-nightly-billing")
+@statsd(namespace="tasks")
+def populate_billing_for_day(process_day):
         transit_data = fetch_billing_data_for_day(process_day=process_day)
 
         for data in transit_data:
@@ -49,7 +55,12 @@ def create_nightly_notification_status(day_start=None):
         day_start = datetime.strptime(day_start, "%Y-%m-%d").date()
     for i in range(0, 10):
         process_day = day_start - timedelta(days=i)
+        populate_notification_status_stats.apply_async([process_day], queue=QueueNames.STATISTICS)
 
+
+@notify_celery.task(name="populate-notification-status-stats")
+@statsd(namespace="tasks")
+def populate_notification_status_stats(process_day):
         transit_data = fetch_notification_status_for_day(process_day=process_day)
 
         update_fact_notification_status(transit_data, process_day)
