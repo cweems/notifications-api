@@ -58,11 +58,20 @@ def dao_get_job_by_service_id_and_job_id(service_id, job_id):
     return Job.query.filter_by(service_id=service_id, id=job_id).one()
 
 
-def dao_get_jobs_by_service_id(service_id, limit_days=None, page=1, page_size=50, statuses=None):
+def dao_get_jobs_by_service_id(
+    service_id,
+    *,
+    limit_days=None,
+    page=1,
+    page_size=50,
+    statuses=None,
+    contact_list_id=None,
+):
     query_filter = [
         Job.service_id == service_id,
         Job.original_file_name != current_app.config['TEST_MESSAGE_FILENAME'],
         Job.original_file_name != current_app.config['ONE_OFF_MESSAGE_FILENAME'],
+        Job.contact_list_id == contact_list_id,
     ]
     if limit_days is not None:
         query_filter.append(Job.created_at >= midnight_n_days_ago(limit_days))
